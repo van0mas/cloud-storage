@@ -1,0 +1,74 @@
+# === OS ===
+.DS_Store
+Thumbs.db
+
+# === Build ===
+/build/
+/target/
+/out/
+/bin/
+
+# === Gradle ===
+.gradle
+gradle-app.setting
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+
+# === Logs ===
+*.log
+logs/
+*.pid
+*.seed
+*.pid.lock
+
+# === Spring Boot ===
+/spring.log
+
+# === IntelliJ IDEA ===
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# === VS Code ===
+.vscode/
+
+# === NetBeans ===
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# === Maven (если вдруг появится) ===
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+
+# === Temporary ===
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# === Java ===
+*.class
+*.jar
+*.war
+*.ear
+
+# === Test coverage / reports ===
+/coverage/
+*.exec
+*.ec
+*.lcov
+/.jacoco/
+/cobertura/
+
+# === IDE user-specific ===
+*.prefs
+
+# === Docker volumes ===
+/data/**
