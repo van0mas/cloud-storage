@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.example.cloudstorage.security.UserDetailsServiceImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -21,23 +23,10 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
-                .csrf(AbstractHttpConfigurer::disable)   // для API
+                .csrf(AbstractHttpConfigurer::disable) // CSRF отключён
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll() // регистрация/логин доступны
-                        .anyRequest().authenticated()
-                )
-                .userDetailsService(userDetailsService)
-                .formLogin(form -> form
-                        .loginProcessingUrl("/api/auth/login") // эндпоинт логина
-                        .usernameParameter("username")
-                        .passwordParameter("password")
-                        .successHandler((req, res, auth) -> res.setStatus(200))
-                        .failureHandler((req, res, ex) -> res.setStatus(401))
-                )
-                .logout(logout -> logout
-                        .logoutUrl("/api/auth/logout")
-                        .deleteCookies("JSESSIONID")
-                        .logoutSuccessHandler((req, res, auth) -> res.setStatus(200))
+                        .requestMatchers("/auth/**").permitAll() // открытые эндпоинты
+                        .anyRequest().authenticated() // все остальные защищены
                 )
                 .build();
     }
@@ -45,5 +34,11 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(
+            AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
     }
 }
