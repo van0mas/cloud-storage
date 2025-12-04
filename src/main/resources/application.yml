@@ -1,4 +1,6 @@
 spring:
+  profiles:
+    active: dev
   application:
     name: cloudStorage
 
@@ -10,8 +12,8 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: create-drop   # автоматически создаёт таблицы из Entity
-    show-sql: true        # показывает SQL в логах
+      ddl-auto: create-drop
+    show-sql: true
     properties:
       hibernate:
         format_sql: true
