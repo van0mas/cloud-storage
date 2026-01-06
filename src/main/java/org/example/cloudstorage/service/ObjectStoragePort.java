@@ -11,15 +11,21 @@ public interface ObjectStoragePort {
 
     void delete(String path);
 
+    void deleteObjects(List<String> paths);
+
     InputStream download(String path);
-
-    StorageResource renameOrMove(String fromPath, String toPath);
-
-    List<StorageResource> search(String prefix, String query);
 
     StorageResource uploadFile(String fullPath, InputStream data, long size, String contentType);
 
-    List<StorageResource> listFolder(String folderPath);
+    List<StorageResource> listAllObjectsRecursive(String prefix);
+
+    List<String> listAllPathsRecursive(String prefix);
 
     StorageResource createFolder(String folderPath);
+
+    List<StorageResource> listFolder(String folderPath);
+
+    void copy(String sourcePath, String destinationPath);
+
+    boolean exists(String path);
 }

@@ -3,8 +3,11 @@ package org.example.cloudstorage.service;
 import io.minio.*;
 import io.minio.errors.ErrorResponseException;
 import io.minio.errors.ServerException;
+import io.minio.messages.DeleteError;
+import io.minio.messages.DeleteObject;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.cloudstorage.exception.storage.*;
 import org.example.cloudstorage.model.StorageResource;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,6 +21,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @RequiredArgsConstructor
 @Component
 public class MinioObjectStorageAdapter implements ObjectStoragePort {
@@ -55,15 +59,35 @@ public class MinioObjectStorageAdapter implements ObjectStoragePort {
     }
 
     @Override
-    public InputStream download(String path) {
-        return handleRequest(path, () ->
-                minioClient.getObject(
-                        GetObjectArgs.builder()
-                                .bucket(bucket)
-                                .object(path)
-                                .build()
-                )
-        );
+    public void deleteObjects(List<String> paths) {
+        if (paths == null || paths.isEmpty()) {
+            return;
+        }
+
+        List<DeleteObject> objects = paths.stream()
+                .map(DeleteObject::new)
+                .toList();
+
+        handleRequest("Batch delete", () -> {
+            Iterable<Result<DeleteError>> results = minioClient.removeObjects(
+                    RemoveObjectsArgs.builder()
+                            .bucket(bucket)
+                            .objects(objects)
+                            .build()
+            );
+
+            // Согласно документации, нужно обязательно проитерировать результат,
+            // иначе удаление не выполнится (ленивая загрузка)
+            for (Result<DeleteError> result : results) {
+                try {
+                    DeleteError error = result.get();
+                    log.error("Error deleting object {}: {}", error.objectName(), error.message());
+                } catch (Exception e) {
+                    log.error("Error while reading delete result", e);
+                }
+            }
+            return null;
+        });
     }
 
     @Override
@@ -88,6 +112,18 @@ public class MinioObjectStorageAdapter implements ObjectStoragePort {
     }
 
     @Override
+    public InputStream download(String path) {
+        return handleRequest(path, () ->
+                minioClient.getObject(
+                        GetObjectArgs.builder()
+                                .bucket(bucket)
+                                .object(path)
+                                .build()
+                )
+        );
+    }
+
+    @Override
     public StorageResource createFolder(String path) {
         handleRequest(path, () ->
                 minioClient.putObject(
@@ -100,6 +136,20 @@ public class MinioObjectStorageAdapter implements ObjectStoragePort {
         );
 
         return new StorageResource(path, 0);
+    }
+
+    @Override
+    public void copy(String sourcePath, String destinationPath) {
+        handleRequest(sourcePath, () -> {
+            minioClient.copyObject(
+                    CopyObjectArgs.builder()
+                            .bucket(bucket)
+                            .object(destinationPath)
+                            .source(CopySource.builder().bucket(bucket).object(sourcePath).build())
+                            .build()
+            );
+            return null;
+        });
     }
 
     @Override
@@ -124,9 +174,9 @@ public class MinioObjectStorageAdapter implements ObjectStoragePort {
     }
 
     @Override
-    public List<StorageResource> search(String prefix, String query) {
+    public List<StorageResource> listAllObjectsRecursive(String prefix) {
         return handleRequest(prefix, () -> {
-            List<StorageResource> result = new ArrayList<>();
+            List<StorageResource> resources = new ArrayList<>();
 
             Iterable<Result<Item>> items = minioClient.listObjects(
                     ListObjectsArgs.builder()
@@ -138,43 +188,23 @@ public class MinioObjectStorageAdapter implements ObjectStoragePort {
 
             for (Result<Item> r : items) {
                 Item item = r.get();
-                if (item.objectName().contains(query)) {
-                    result.add(new StorageResource(item.objectName(), item.size()));
-                }
+                resources.add(new StorageResource(item.objectName(), item.size()));
             }
-            return result;
+            return resources;
         });
     }
 
     @Override
-    public StorageResource renameOrMove(String fromPath, String toPath) {
-        StorageResource source = getResource(fromPath);
-
-        if (exists(toPath)) {
-            throw new StorageConflictException(toPath);
-        }
-
-        handleRequest(toPath, () ->
-                minioClient.copyObject(
-                        CopyObjectArgs.builder()
-                                .bucket(bucket)
-                                .object(toPath)
-                                .source(CopySource.builder()
-                                                .bucket(bucket)
-                                                .object(fromPath)
-                                                .build())
-                                .build()
-                )
-        );
-
-        delete(fromPath);
-        return new StorageResource(toPath, source.size());
+    public List<String> listAllPathsRecursive(String prefix) {
+        return listAllObjectsRecursive(prefix).stream()
+                .map(StorageResource::fullPath)
+                .toList();
     }
 
-    private boolean exists(String path) {
+    public boolean exists(String path) {
         try {
             getResource(path);
-            return true;
+            return  true;
         } catch (StorageNotFoundException e) {
             return false;
         }
