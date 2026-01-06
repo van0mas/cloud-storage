@@ -1,10 +1,9 @@
-package org.example.cloudstorage;
+package org.example.cloudstorage.it;
 
 import io.minio.BucketExistsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import org.example.cloudstorage.service.MinioObjectStorageAdapter;
-import org.example.cloudstorage.exception.storage.StorageConflictException;
 import org.example.cloudstorage.exception.storage.StorageNotFoundException;
 import org.example.cloudstorage.model.StorageResource;
 import org.junit.jupiter.api.BeforeEach;
@@ -96,47 +95,80 @@ class MinioObjectStorageAdapterIT {
     }
 
     @Test
-    @DisplayName("Должен выбросить StorageConflictException при конфликте путей")
-    void renameOrMove_ShouldThrowConflict_WhenTargetExists() {
-        String file1 = "file1.txt";
-        String file2 = "file2.txt";
+    @DisplayName("Должен успешно скопировать объект")
+    void copyObject_ShouldWorkCorrectly() {
+        adapter.uploadFile("folder/file1.txt", new ByteArrayInputStream(new byte[0]), 0, "text/plain");
+        assertThat(adapter.getResource("folder/file1.txt")).isNotNull();
 
-        adapter.uploadFile(file1, new ByteArrayInputStream(new byte[5]), 5, "text/plain");
-        adapter.uploadFile(file2, new ByteArrayInputStream(new byte[5]), 5, "text/plain");
-
-        assertThatThrownBy(() -> adapter.renameOrMove(file1, file2))
-                .isInstanceOf(StorageConflictException.class)
-                .hasMessageContaining("Target path already occupied");
+        adapter.copy("folder/file1.txt", "renamed-folder/file1.txt");
+        assertThat(adapter.getResource("renamed-folder/file1.txt")).isNotNull();
     }
 
     @Test
-    @DisplayName("Должен успешно переместить файл и удалить оригинал")
-    void renameOrMove_ShouldWorkCorrectly() {
-        String from = "old-name.txt";
-        String to = "new-name.txt";
+    @DisplayName("Должен успешно удалить файл")
+    void deleteFile_ShouldWorkCorrectly() {
+        String path = "file-to-delete.txt";
+        adapter.uploadFile(path, new ByteArrayInputStream(new byte[0]), 0, "text/plain");
 
-        adapter.uploadFile(from, new ByteArrayInputStream(new byte[10]), 10, "text/plain");
-
-        adapter.renameOrMove(from, to);
-
-        assertThat(adapter.getResource(to)).isNotNull();
-        assertThatThrownBy(() -> adapter.getResource(from))
+        assertThat(adapter.getResource(path)).isNotNull();
+        adapter.delete(path);
+        assertThatThrownBy(() -> adapter.getResource(path))
                 .isInstanceOf(StorageNotFoundException.class);
     }
 
     @Test
-    @DisplayName("Должен найти файлы по имени рекурсивно")
+    @DisplayName("Должен успешно удалить папку и все её содержимое")
+    void deleteFolder_ShouldWorkCorrectly() {
+        adapter.createFolder("folder/");
+        adapter.uploadFile("folder/file1.txt", new ByteArrayInputStream(new byte[0]), 0, "text/plain");
+        adapter.uploadFile("folder/sub/file2.txt", new ByteArrayInputStream(new byte[0]), 0, "text/plain");
+
+        assertThat(adapter.getResource("folder/file1.txt")).isNotNull();
+        assertThat(adapter.getResource("folder/sub/file2.txt")).isNotNull();
+
+        adapter.deleteObjects(adapter.listAllPathsRecursive("folder/"));
+
+        assertThatThrownBy(() -> adapter.getResource("folder/file1.txt"))
+                .isInstanceOf(StorageNotFoundException.class);
+        assertThatThrownBy(() -> adapter.getResource("folder/sub/file2.txt"))
+                .isInstanceOf(StorageNotFoundException.class);
+    }
+
+    @Test
+    @DisplayName("Должен найти все пути рекурсивно в папке, включая папку")
+    void listAllObjectsRecursive_ShouldReturnAllPaths() {
+        adapter.createFolder("docs2/");
+        adapter.uploadFile("docs2/file1.txt", new ByteArrayInputStream(new byte[0]), 0, "text/plain");
+        adapter.uploadFile("docs2/subdir/file2.txt", new ByteArrayInputStream(new byte[0]), 0, "text/plain");
+
+        List<String> allFiles = adapter.listAllPathsRecursive("docs2/");
+
+        List<String> normalized = allFiles.stream()
+                .map(p -> p.substring(p.indexOf("docs2/")))
+                .toList();
+
+        assertThat(normalized)
+                .containsExactlyInAnyOrder(
+                        "docs2/",
+                        "docs2/file1.txt",
+                        "docs2/subdir/file2.txt"
+                );
+    }
+
+    @Test
+    @DisplayName("Должен найти все объекты рекурсивно в папке, включая папку")
     void search_ShouldFindFilesRecursively() {
         adapter.createFolder("docs/");
         adapter.uploadFile("docs/test1.txt", new ByteArrayInputStream(new byte[0]), 0, "text/plain");
         adapter.uploadFile("docs/sub/test2.txt", new ByteArrayInputStream(new byte[0]), 0, "text/plain");
         adapter.uploadFile("other.txt", new ByteArrayInputStream(new byte[0]), 0, "text/plain");
 
-        List<StorageResource> found = adapter.search("docs/", "test");
+        List<StorageResource> found = adapter.listAllObjectsRecursive("docs/");
 
         assertThat(found)
                 .extracting(StorageResource::fullPath)
                 .containsExactlyInAnyOrder(
+                            "docs/",
                         "docs/test1.txt",
                         "docs/sub/test2.txt"
                 );
@@ -163,6 +195,18 @@ class MinioObjectStorageAdapterIT {
         StorageResource resource = adapter.getResource(folderPath);
         assertThat(resource.fullPath()).isEqualTo(folderPath);
         assertThat(resource.size()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("getResource должен отличать папку от файла")
+    void getResource_ShouldDistinguishFolderAndFile() {
+        String filePath = "folder-to-distinguish/file.txt";
+        adapter.uploadFile(filePath, new ByteArrayInputStream(new byte[0]), 0, "text/plain");
+
+        assertThat(adapter.getResource(filePath)).isNotNull();
+
+        assertThatThrownBy(() -> adapter.getResource(filePath + "/"))
+                .isInstanceOf(StorageNotFoundException.class);
     }
 
     @Test
