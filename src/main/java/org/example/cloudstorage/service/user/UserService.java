@@ -1,4 +1,4 @@
-package org.example.cloudstorage.service;
+package org.example.cloudstorage.service.user;
 
 import org.example.cloudstorage.model.User;
 

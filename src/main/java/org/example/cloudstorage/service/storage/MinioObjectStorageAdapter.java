@@ -1,4 +1,4 @@
-package org.example.cloudstorage.service;
+package org.example.cloudstorage.service.storage;
 
 import io.minio.*;
 import io.minio.errors.ErrorResponseException;

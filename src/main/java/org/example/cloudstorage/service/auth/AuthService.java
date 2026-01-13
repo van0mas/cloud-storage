@@ -1,4 +1,4 @@
-package org.example.cloudstorage.service;
+package org.example.cloudstorage.service.auth;
 
 import org.example.cloudstorage.dto.AuthRequestDto;
 import org.example.cloudstorage.dto.AuthResponseDto;

@@ -3,7 +3,7 @@ package org.example.cloudstorage.it;
 import io.minio.BucketExistsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
-import org.example.cloudstorage.service.MinioObjectStorageAdapter;
+import org.example.cloudstorage.service.storage.MinioObjectStorageAdapter;
 import org.example.cloudstorage.exception.storage.StorageNotFoundException;
 import org.example.cloudstorage.model.StorageResource;
 import org.junit.jupiter.api.BeforeEach;
@@ -210,13 +210,14 @@ class MinioObjectStorageAdapterIT {
     }
 
     @Test
-    @DisplayName("listFolder должен возвращать только объекты первого уровня")
+    @DisplayName("listFolder должен возвращать объекты первого уровня и саму папку")
     void listFolder_ShouldReturnNonRecursiveItems() {
+        adapter.createFolder("a/");
         adapter.uploadFile("a/1.txt", new ByteArrayInputStream(new byte[0]), 0, "text/plain");
         adapter.uploadFile("a/sub/2.txt", new ByteArrayInputStream(new byte[0]), 0, "text/plain");
 
         List<StorageResource> items = adapter.listFolder("a/");
 
-        assertThat(items).hasSize(2);
+        assertThat(items).hasSize(3);
     }
 }

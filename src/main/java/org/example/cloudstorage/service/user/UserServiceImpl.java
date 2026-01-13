@@ -1,9 +1,9 @@
-package org.example.cloudstorage.service;
+package org.example.cloudstorage.service.user;
 
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.example.cloudstorage.exception.UserAlreadyExistsException;
-import org.example.cloudstorage.exception.UserNotFoundException;
+import org.example.cloudstorage.exception.user.UserAlreadyExistsException;
+import org.example.cloudstorage.exception.user.UserNotFoundException;
 import org.example.cloudstorage.model.User;
 import org.example.cloudstorage.repository.UserRepository;
 import org.springframework.dao.DataIntegrityViolationException;
