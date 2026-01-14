@@ -22,10 +22,8 @@ public class AuthController {
     @PostMapping("/auth/sign-up")
     @ResponseStatus(HttpStatus.CREATED)
     public AuthResponseDto signUp(@Valid @RequestBody AuthRequestDto dto) {
-        AuthResponseDto responseDto = authService.register(dto);
-        authService.login(dto);
-
-        return responseDto;
+        authService.register(dto);
+        return authService.login(dto);
     }
 
     @PostMapping("/auth/sign-in")
