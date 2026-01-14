@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.cloudstorage.exception.storage.ParentNotFoundException;
 import org.example.cloudstorage.exception.storage.StorageConflictException;
 import org.example.cloudstorage.exception.storage.StorageNotFoundException;
+import org.example.cloudstorage.exception.BadRequestException;
 import org.example.cloudstorage.util.PathUtils;
 import org.springframework.stereotype.Component;
 
@@ -78,6 +79,23 @@ public class PathValidator {
 
         if (to.startsWith(from)) {
             throw new IllegalArgumentException("Нельзя переместить папку в саму себя");
+        }
+    }
+
+    public void validatePath(String path, boolean mustBeDirectory) throws BadRequestException {
+        if (path == null || path.isBlank()) return;
+
+        if (path.contains("..")) {
+            throw new BadRequestException("Путь не может содержать '..'");
+        }
+
+        if (!path.matches("^[a-zA-Zа-яА-ЯёЁ0-9 /_.-]+$")) {
+            System.out.println(path + " не прошло валидацию");
+            throw new BadRequestException("Путь содержит недопустимые символы");
+        }
+
+        if (mustBeDirectory && !path.endsWith("/")) {
+            throw new BadRequestException("Путь к директории должен заканчиваться на '/'");
         }
     }
 }

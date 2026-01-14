@@ -91,7 +91,10 @@ public class FileService {
         List<StorageResource> uploadedResources = new ArrayList<>();
 
         for (MultipartFile file : files) {
-            String relativePath = destinationPath + file.getOriginalFilename();
+            String originalFilename = file.getOriginalFilename();
+
+            pathValidator.validatePath(originalFilename, false);
+            String relativePath = destinationPath + originalFilename;
             String fullPath = generateUserPath(userId, relativePath);
 
             pathValidator.validateUpload(fullPath);
