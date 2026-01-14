@@ -112,7 +112,7 @@ public class FileService {
         return resourceMapper.toDtoList(uploadedResources);
     }
 
-    public void move(long userId, String fromPath, String toPath) {
+    public ResourceInfoDto move(long userId, String fromPath, String toPath) {
         String fullFrom = generateUserPath(userId, fromPath);
         String fullTo = generateUserPath(userId, toPath);
 
@@ -134,6 +134,8 @@ public class FileService {
             storagePort.copy(fullFrom, fullTo);
             storagePort.delete(fullFrom);
         }
+
+        return resourceMapper.toDto(storagePort.getResource(fullTo));
     }
 
     public List<ResourceInfoDto> listFolder(long userId, String path) {

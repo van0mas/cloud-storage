@@ -59,8 +59,7 @@ public class FileController {
     public ResourceInfoDto moveResource(@CurrentUser Long userId,
                                         @RequestParam @ValidPath @NotBlank String from,
                                         @RequestParam @ValidPath @NotBlank String to) {
-        fileService.move(userId, from, to);
-        return fileService.getResource(userId, to);
+        return fileService.move(userId, from, to);
     }
 
     @GetMapping("/resource/search")
