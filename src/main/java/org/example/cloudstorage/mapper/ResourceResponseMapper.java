@@ -12,26 +12,28 @@ import java.util.List;
 public class ResourceResponseMapper {
 
     public ResourceInfoDto toDto(StorageResource resource) {
-        String fullPath = resource.fullPath();
+        return toDto(resource.fullPath(), resource.isDirectory(), resource.size());
+    }
+
+    public ResourceInfoDto fromDirectory(String fullPath) {
+        return toDto(fullPath, true, null);
+    }
+
+    private ResourceInfoDto toDto(String fullPath, boolean isDirectory, Long size) {
         String relativePath = PathUtils.extractRelativePath(AppConstants.Storage.USER_PREFIX_PATTERN, fullPath);
         String resourceName = PathUtils.extractName(relativePath);
         String parentPath = PathUtils.extractParentPath(relativePath);
 
-        if (resource.isDirectory()) {
+        if (isDirectory) {
             // фронт требует, чтобы имя папки заканчивалось слэшем
-            String dirName = resourceName + "/";
+            String dirName = resourceName.endsWith("/") ? resourceName : resourceName + "/";
             return ResourceInfoDto.directory(parentPath, dirName);
         } else {
-            return ResourceInfoDto.file(parentPath, resourceName, resource.size());
+            return ResourceInfoDto.file(parentPath, resourceName, size);
         }
     }
 
     public List<ResourceInfoDto> toDtoList(List<StorageResource> resources) {
-        if (resources == null) {
-            return List.of();
-        }
-        return resources.stream()
-                .map(this::toDto)
-                .toList();
+        return resources == null ? List.of() : resources.stream().map(this::toDto).toList();
     }
 }

@@ -5,6 +5,7 @@ import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import org.assertj.core.api.Assertions;
 import org.example.cloudstorage.dto.ResourceInfoDto;
+import org.example.cloudstorage.exception.BadRequestException;
 import org.example.cloudstorage.exception.storage.StorageConflictException;
 import org.example.cloudstorage.exception.storage.StorageNotFoundException;
 import org.example.cloudstorage.service.storage.FileService;
@@ -209,7 +210,7 @@ class FileServiceIntegrationTest {
     void move_ShouldFail_WhenMovingIntoNestedSelf() {
         fileService.createFolder(userId, "projects/");
 
-        assertThrows(IllegalArgumentException.class, () ->
+        assertThrows(BadRequestException.class, () ->
                 fileService.move(userId, "projects/", "projects/java/")
         );
     }

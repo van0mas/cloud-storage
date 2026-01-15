@@ -129,13 +129,13 @@ public class FileService {
             }
 
             storagePort.deleteObjects(paths);
+            return resourceMapper.fromDirectory(fullTo);
 
         } else {
             storagePort.copy(fullFrom, fullTo);
             storagePort.delete(fullFrom);
+            return resourceMapper.toDto(storagePort.getResource(fullTo));
         }
-
-        return resourceMapper.toDto(storagePort.getResource(fullTo));
     }
 
     public List<ResourceInfoDto> listFolder(long userId, String path) {
