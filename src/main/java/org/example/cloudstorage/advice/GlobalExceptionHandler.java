@@ -1,6 +1,7 @@
 package org.example.cloudstorage.advice;
 
 import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
 import org.example.cloudstorage.config.AppConstants;
 import org.example.cloudstorage.exception.storage.StorageException;
 import org.example.cloudstorage.exception.user.UnauthorizedException;
@@ -15,8 +16,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import static org.example.cloudstorage.config.AppConstants.ExceptionMessages.INTERNAL_SERVER_ERROR;
-
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -25,12 +25,14 @@ public class GlobalExceptionHandler {
     // Storage
     @ExceptionHandler(StorageException.class)
     public ResponseEntity<ErrorResponse> handleStorageException(StorageException e) {
+        String relativePath = PathUtils.extractRelativePath(AppConstants.Storage.USER_PREFIX_PATTERN, e.getPath());
+        String fullMessage = e.getMessage() + AppConstants.ExceptionMessages.MESSAGE_PATH_DELIMITER + relativePath;
+
+        log.warn("Storage exception occurred: status={}, message='{}', path='{}'",
+                e.getHttpStatus(), e.getMessage(), relativePath);
+
         return ResponseEntity.status(e.getHttpStatus())
-                .body(new ErrorResponse(
-                        e.getMessage()
-                        + AppConstants.ExceptionMessages.MESSAGE_PATH_DELIMITER
-                        + PathUtils.extractRelativePath(AppConstants.Storage.USER_PREFIX_PATTERN, e.getPath()))
-                );
+                .body(new ErrorResponse(fullMessage));
     }
 
     // 400
@@ -50,6 +52,7 @@ public class GlobalExceptionHandler {
             message = ex.getConstraintViolations().iterator().next().getMessage();
         }
 
+        log.warn("Bad request: {}", message);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ErrorResponse(message));
     }
@@ -61,20 +64,23 @@ public class GlobalExceptionHandler {
                 ? AppConstants.ExceptionMessages.BAD_CREDENTIALS
                 : e.getMessage();
 
+        log.warn("Unauthorized access attempt: {}", msg);
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(new ErrorResponse(msg));
     }
 
     // 404
     @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleNotFound(RuntimeException e) {
+    public ResponseEntity<ErrorResponse> handleNotFound(UserNotFoundException e) {
+        log.warn("User not found: {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(new ErrorResponse(e.getMessage()));
     }
 
     // 409
     @ExceptionHandler(UserAlreadyExistsException.class)
-    public ResponseEntity<ErrorResponse> handleConflict(RuntimeException e) {
+    public ResponseEntity<ErrorResponse> handleConflict(UserAlreadyExistsException e) {
+        log.warn("User conflict: {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(new ErrorResponse(e.getMessage()));
     }
@@ -82,7 +88,8 @@ public class GlobalExceptionHandler {
     // 500
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleInternalError(Exception e) {
+        log.error("UNEXPECTED INTERNAL ERROR: {}", e.getMessage(), e);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ErrorResponse(INTERNAL_SERVER_ERROR));
+                .body(new ErrorResponse(AppConstants.ExceptionMessages.INTERNAL_SERVER_ERROR));
     }
 }

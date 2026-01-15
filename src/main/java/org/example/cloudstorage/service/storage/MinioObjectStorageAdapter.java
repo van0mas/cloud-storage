@@ -34,6 +34,7 @@ public class MinioObjectStorageAdapter implements ObjectStoragePort {
     @Override
     public StorageResource getResource(String path) {
         return handleRequest(path, () -> {
+            log.trace("MinIO: Stat object request: '{}'", path);
             var stat = minioClient.statObject(
                     StatObjectArgs.builder()
                             .bucket(bucket)
@@ -48,6 +49,7 @@ public class MinioObjectStorageAdapter implements ObjectStoragePort {
     @Override
     public void delete(String path) {
         handleRequest(path, () -> {
+            log.debug("MinIO: Remove object request: '{}'", path);
             minioClient.removeObject(
                     RemoveObjectArgs.builder()
                             .bucket(bucket)
@@ -61,9 +63,11 @@ public class MinioObjectStorageAdapter implements ObjectStoragePort {
     @Override
     public void deleteObjects(List<String> paths) {
         if (paths == null || paths.isEmpty()) {
+            log.debug("MinIO: Batch delete requested with empty list");
             return;
         }
 
+        log.debug("MinIO: Batch delete started for {} objects", paths.size());
         List<DeleteObject> objects = paths.stream()
                 .map(DeleteObject::new)
                 .toList();
@@ -76,14 +80,12 @@ public class MinioObjectStorageAdapter implements ObjectStoragePort {
                             .build()
             );
 
-            // Согласно документации, нужно обязательно проитерировать результат,
-            // иначе удаление не выполнится (ленивая загрузка)
             for (Result<DeleteError> result : results) {
                 try {
                     DeleteError error = result.get();
-                    log.error("Error deleting object {}: {}", error.objectName(), error.message());
+                    log.error("MinIO: Error deleting object {}: {}", error.objectName(), error.message());
                 } catch (Exception e) {
-                    log.error("Error while reading delete result", e);
+                    log.error("MinIO: Error while reading delete result", e);
                 }
             }
             return null;
@@ -97,6 +99,7 @@ public class MinioObjectStorageAdapter implements ObjectStoragePort {
             long size,
             String contentType
     ) {
+        log.debug("MinIO: Uploading object: '{}' ({} bytes, {})", path, size, contentType);
         handleRequest(path, () ->
                 minioClient.putObject(
                         PutObjectArgs.builder()
@@ -113,6 +116,7 @@ public class MinioObjectStorageAdapter implements ObjectStoragePort {
 
     @Override
     public InputStream download(String path) {
+        log.debug("MinIO: Download object request: '{}'", path);
         return handleRequest(path, () ->
                 minioClient.getObject(
                         GetObjectArgs.builder()
@@ -125,6 +129,7 @@ public class MinioObjectStorageAdapter implements ObjectStoragePort {
 
     @Override
     public StorageResource createFolder(String path) {
+        log.debug("MinIO: Creating folder marker: '{}'", path);
         handleRequest(path, () ->
                 minioClient.putObject(
                         PutObjectArgs.builder()
@@ -140,6 +145,7 @@ public class MinioObjectStorageAdapter implements ObjectStoragePort {
 
     @Override
     public void copy(String sourcePath, String destinationPath) {
+        log.debug("MinIO: Copy object: '{}' -> '{}'", sourcePath, destinationPath);
         handleRequest(sourcePath, () -> {
             minioClient.copyObject(
                     CopyObjectArgs.builder()
@@ -154,6 +160,7 @@ public class MinioObjectStorageAdapter implements ObjectStoragePort {
 
     @Override
     public List<StorageResource> listFolder(String path) {
+        log.debug("MinIO: List objects (flat) with prefix: '{}'", path);
         return handleRequest(path, () -> {
             List<StorageResource> result = new ArrayList<>();
 
@@ -169,12 +176,14 @@ public class MinioObjectStorageAdapter implements ObjectStoragePort {
                 Item item = r.get();
                 result.add(new StorageResource(item.objectName(), item.size()));
             }
+            log.trace("MinIO: Found {} items in prefix '{}'", result.size(), path);
             return result;
         });
     }
 
     @Override
     public List<StorageResource> listAllObjectsRecursive(String prefix) {
+        log.debug("MinIO: List objects (recursive) with prefix: '{}'", prefix);
         return handleRequest(prefix, () -> {
             List<StorageResource> resources = new ArrayList<>();
 
@@ -190,6 +199,7 @@ public class MinioObjectStorageAdapter implements ObjectStoragePort {
                 Item item = r.get();
                 resources.add(new StorageResource(item.objectName(), item.size()));
             }
+            log.trace("MinIO: Found {} items recursively in prefix '{}'", resources.size(), prefix);
             return resources;
         });
     }
@@ -204,7 +214,7 @@ public class MinioObjectStorageAdapter implements ObjectStoragePort {
     public boolean exists(String path) {
         try {
             getResource(path);
-            return  true;
+            return true;
         } catch (StorageNotFoundException e) {
             return false;
         }
@@ -214,7 +224,11 @@ public class MinioObjectStorageAdapter implements ObjectStoragePort {
         try {
             return action.get();
         } catch (ErrorResponseException e) {
-            switch (e.errorResponse().code()) {
+            String code = e.errorResponse().code();
+            log.warn("MinIO: Error response for path '{}': code={}, message={}",
+                    path, code, e.errorResponse().message());
+
+            switch (code) {
                 case "NoSuchKey", "NoSuchBucket" ->
                         throw new StorageNotFoundException(path, e);
 
@@ -229,9 +243,11 @@ public class MinioObjectStorageAdapter implements ObjectStoragePort {
             }
 
         } catch (ServerException | IOException e) {
+            log.error("MinIO: Connection or server error for path '{}': {}", path, e.getMessage());
             throw new StorageUnavailableException(path, e);
 
         } catch (Exception e) {
+            log.error("MinIO: Unexpected error for path '{}': {}", path, e.getMessage(), e);
             throw new StorageInternalException(path, e);
         }
     }
