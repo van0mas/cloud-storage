@@ -15,6 +15,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import static org.example.cloudstorage.config.AppConstants.ExceptionMessages.INTERNAL_SERVER_ERROR;
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -81,6 +83,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleInternalError(Exception e) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ErrorResponse("Unknown error occurred"));
+                .body(new ErrorResponse(INTERNAL_SERVER_ERROR));
     }
 }

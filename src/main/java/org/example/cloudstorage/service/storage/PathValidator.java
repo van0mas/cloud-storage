@@ -1,13 +1,15 @@
 package org.example.cloudstorage.service.storage;
 
 import lombok.RequiredArgsConstructor;
-import org.example.cloudstorage.exception.storage.StorageConflictException;
-import org.example.cloudstorage.exception.storage.StorageNotFoundException;
+import org.example.cloudstorage.config.AppConstants;
+import org.example.cloudstorage.exception.storage.*;
 import org.example.cloudstorage.exception.BadRequestException;
 import org.example.cloudstorage.util.PathUtils;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+
+import static org.example.cloudstorage.config.AppConstants.ExceptionMessages.*;
 
 @Component
 @RequiredArgsConstructor
@@ -44,7 +46,7 @@ public class PathValidator {
         String parentPath = PathUtils.extractParentPath(path);
         if (!parentPath.equals(userPrefix)) {
             if (!existsAnywhere(parentPath)) {
-                throw new BadRequestException("Родительская папка не существует. Вручную нельзя создавать вложенные папки.");
+                throw new BadRequestException(FOLDER_PARENT_MISSING);
             }
         }
     }
@@ -73,31 +75,31 @@ public class PathValidator {
         }
 
         if (from.endsWith("/") != to.endsWith("/")) {
-            throw new BadRequestException("Нельзя менять тип ресурса (файл/папка) при перемещении");
+            throw new BadRequestException(MOVE_TYPE_MISMATCH);
         }
 
         if (to.startsWith(from)) {
-            throw new BadRequestException("Нельзя переместить папку в саму себя");
+            throw new BadRequestException(MOVE_INTO_ITSELF);
         }
     }
 
     public void validatePath(String path, boolean mustBeDirectory) throws BadRequestException {
         if (path == null || path.isBlank()) return;
 
-        if (path.length() > 1024) {
-            throw new BadRequestException("Путь не может быть длиннее 1024 символов");
+        if (path.length() > AppConstants.Storage.MAX_PATH_LENGTH) {
+            throw new BadRequestException(PATH_TOO_LONG);
         }
 
         if (path.contains("..")) {
-            throw new BadRequestException("Путь не может содержать '..'");
+            throw new BadRequestException(PATH_CONTAINS_DOTS);
         }
 
-        if (!path.matches("^[a-zA-Zа-яА-ЯёЁ0-9 /_.-]+$")) {
-            throw new BadRequestException("Путь содержит недопустимые символы");
+        if (!AppConstants.Storage.PATH_PATTERN.matcher(path).matches()) {
+            throw new BadRequestException(PATH_INVALID_CHARACTERS);
         }
 
         if (mustBeDirectory && !path.endsWith("/")) {
-            throw new BadRequestException("Путь к директории должен заканчиваться на '/'");
+            throw new BadRequestException(PATH_MUST_BE_DIRECTORY);
         }
     }
 }
