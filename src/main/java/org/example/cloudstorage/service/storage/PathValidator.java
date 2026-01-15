@@ -84,6 +84,10 @@ public class PathValidator {
     public void validatePath(String path, boolean mustBeDirectory) throws BadRequestException {
         if (path == null || path.isBlank()) return;
 
+        if (path.length() > 1024) {
+            throw new BadRequestException("Путь не может быть длиннее 1024 символов");
+        }
+
         if (path.contains("..")) {
             throw new BadRequestException("Путь не может содержать '..'");
         }
