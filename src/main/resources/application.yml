@@ -31,7 +31,9 @@ server:
 
 logging:
   level:
-    org.springframework: INFO
+    root: INFO
+    org.example.cloudstorage: DEBUG
+    org.example.cloudstorage.service: TRACE
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
 
