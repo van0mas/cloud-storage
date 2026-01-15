@@ -21,7 +21,7 @@ public class UserServiceImpl implements UserService {
         try {
             userRepository.save(user);
         } catch (DataIntegrityViolationException e) {
-            throw new UserAlreadyExistsException("user already exists");
+            throw new UserAlreadyExistsException();
         }
 
         return user;
@@ -30,6 +30,6 @@ public class UserServiceImpl implements UserService {
     @Override
     public User findByUsername(String username) {
         return userRepository.findByUsername(username)
-                .orElseThrow(() -> new UserNotFoundException("user not found"));
+                .orElseThrow(UserNotFoundException::new);
     }
 }

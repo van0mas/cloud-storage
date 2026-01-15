@@ -225,17 +225,14 @@ public class MinioObjectStorageAdapter implements ObjectStoragePort {
                         throw new StorageConflictException(path);
 
                 default ->
-                        throw new StorageInternalException(e);
+                        throw new StorageInternalException(path, e);
             }
 
         } catch (ServerException | IOException e) {
-            throw new StorageUnavailableException(e);
-
-        } catch (InvalidKeyException | NoSuchAlgorithmException e) {
-            throw new StorageInternalException(e);
+            throw new StorageUnavailableException(path, e);
 
         } catch (Exception e) {
-            throw new StorageInternalException(e);
+            throw new StorageInternalException(path, e);
         }
     }
 

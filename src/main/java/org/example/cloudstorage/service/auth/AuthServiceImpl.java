@@ -57,7 +57,7 @@ public class AuthServiceImpl implements AuthService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null || !authentication.isAuthenticated()) {
-            throw new UnauthorizedException("User is not authenticated");
+            throw new UnauthorizedException();
         }
 
         SecurityContextHolder.clearContext();

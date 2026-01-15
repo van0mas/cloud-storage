@@ -1,7 +1,6 @@
 package org.example.cloudstorage.service.storage;
 
 import lombok.RequiredArgsConstructor;
-import org.example.cloudstorage.exception.storage.ParentNotFoundException;
 import org.example.cloudstorage.exception.storage.StorageConflictException;
 import org.example.cloudstorage.exception.storage.StorageNotFoundException;
 import org.example.cloudstorage.exception.BadRequestException;
@@ -45,7 +44,7 @@ public class PathValidator {
         String parentPath = PathUtils.extractParentPath(path);
         if (!parentPath.equals(userPrefix)) {
             if (!existsAnywhere(parentPath)) {
-                throw new ParentNotFoundException(parentPath);
+                throw new BadRequestException("Родительская папка не существует. Вручную нельзя создавать вложенные папки.");
             }
         }
     }
@@ -74,11 +73,11 @@ public class PathValidator {
         }
 
         if (from.endsWith("/") != to.endsWith("/")) {
-            throw new IllegalArgumentException("Нельзя менять тип ресурса (файл/папка) при перемещении");
+            throw new BadRequestException("Нельзя менять тип ресурса (файл/папка) при перемещении");
         }
 
         if (to.startsWith(from)) {
-            throw new IllegalArgumentException("Нельзя переместить папку в саму себя");
+            throw new BadRequestException("Нельзя переместить папку в саму себя");
         }
     }
 
@@ -90,7 +89,6 @@ public class PathValidator {
         }
 
         if (!path.matches("^[a-zA-Zа-яА-ЯёЁ0-9 /_.-]+$")) {
-            System.out.println(path + " не прошло валидацию");
             throw new BadRequestException("Путь содержит недопустимые символы");
         }
 
