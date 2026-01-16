@@ -33,9 +33,7 @@ public class AuthController {
 
     @PostMapping("/auth/sign-out")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void signOut() {
-        authService.logout();
-    }
+    public void signOut() {}
 
     @GetMapping("/user/me")
     public AuthResponseDto getCurrentUser(@CurrentUser User userDetails) {

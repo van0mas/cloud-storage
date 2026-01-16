@@ -51,15 +51,4 @@ public class AuthServiceImpl implements AuthService {
         User savedUser = userService.createUser(user);
         return authMapper.toResponseDto(savedUser);
     }
-
-    @Override
-    public void logout() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new UnauthorizedException();
-        }
-
-        SecurityContextHolder.clearContext();
-    }
 }
