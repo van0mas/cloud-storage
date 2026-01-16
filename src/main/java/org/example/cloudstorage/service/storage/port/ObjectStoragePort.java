@@ -1,4 +1,4 @@
-package org.example.cloudstorage.service.storage;
+package org.example.cloudstorage.service.storage.port;
 
 import org.example.cloudstorage.model.StorageResource;
 

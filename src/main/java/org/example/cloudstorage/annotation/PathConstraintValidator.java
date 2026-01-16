@@ -3,7 +3,7 @@ package org.example.cloudstorage.annotation;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import lombok.RequiredArgsConstructor;
-import org.example.cloudstorage.service.storage.PathValidator;
+import org.example.cloudstorage.service.storage.validation.PathValidator;
 import org.example.cloudstorage.exception.BadRequestException;
 import org.springframework.stereotype.Component;
 

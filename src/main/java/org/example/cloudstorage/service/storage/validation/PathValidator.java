@@ -1,10 +1,11 @@
-package org.example.cloudstorage.service.storage;
+package org.example.cloudstorage.service.storage.validation;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.cloudstorage.config.AppConstants;
 import org.example.cloudstorage.exception.storage.*;
 import org.example.cloudstorage.exception.BadRequestException;
+import org.example.cloudstorage.service.storage.port.ObjectStoragePort;
 import org.example.cloudstorage.util.PathUtils;
 import org.springframework.stereotype.Component;
 
