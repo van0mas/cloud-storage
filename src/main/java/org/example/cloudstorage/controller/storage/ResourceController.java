@@ -1,5 +1,4 @@
-
-package org.example.cloudstorage.controller;
+package org.example.cloudstorage.controller.storage;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
@@ -21,27 +20,35 @@ import java.io.IOException;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/")
+@RequestMapping("/api/resource")
 @RequiredArgsConstructor
 @Validated
-public class FileController {
+public class ResourceController {
 
     private final FileService fileService;
 
-    @GetMapping("/resource")
+    @GetMapping
     public ResourceInfoDto getResource(@CurrentUser Long userId,
                                        @RequestParam @ValidPath @NotBlank String path) {
         return fileService.getResource(userId, path);
     }
 
-    @DeleteMapping("/resource")
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public List<ResourceInfoDto> upload(@CurrentUser Long userId,
+                                        @ValidPath(mustBeDirectory = true) @RequestParam(required = false) String path,
+                                        @RequestPart("object") List<MultipartFile> object) throws IOException {
+        return fileService.upload(userId, path, object);
+    }
+
+    @DeleteMapping
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteResource(@CurrentUser Long userId,
                                @RequestParam @ValidPath @NotBlank String path) {
         fileService.delete(userId, path);
     }
 
-    @GetMapping("/resource/download")
+    @GetMapping("/download")
     public ResponseEntity<StreamingResponseBody> download(@CurrentUser Long userId,
                                                           @RequestParam @ValidPath @NotBlank String path) {
 
@@ -55,37 +62,16 @@ public class FileController {
                 .body(responseBody);
     }
 
-    @GetMapping("/resource/move")
+    @GetMapping("/move")
     public ResourceInfoDto moveResource(@CurrentUser Long userId,
                                         @RequestParam @ValidPath @NotBlank String from,
                                         @RequestParam @ValidPath @NotBlank String to) {
         return fileService.move(userId, from, to);
     }
 
-    @GetMapping("/resource/search")
+    @GetMapping("/search")
     public List<ResourceInfoDto> search(@CurrentUser Long userId,
                                         @NotBlank String query) {
         return fileService.search(userId, query);
-    }
-
-    @PostMapping("/resource")
-    @ResponseStatus(HttpStatus.CREATED)
-    public List<ResourceInfoDto> upload(@CurrentUser Long userId,
-                                        @ValidPath(mustBeDirectory = true) @RequestParam(required = false) String path,
-                                        @RequestPart("object") List<MultipartFile> object) throws IOException {
-        return fileService.upload(userId, path, object);
-    }
-
-    @GetMapping("/directory")
-    public List<ResourceInfoDto> listDirectory(@CurrentUser Long userId,
-                                               @RequestParam(required = false) @ValidPath(mustBeDirectory = true) String path) {
-        return fileService.listFolder(userId, path);
-    }
-
-    @PostMapping("/directory")
-    @ResponseStatus(HttpStatus.CREATED)
-    public ResourceInfoDto createDirectory(@CurrentUser Long userId,
-                                           @RequestParam @ValidPath(mustBeDirectory = true) @NotBlank String path) {
-        return fileService.createFolder(userId, path);
     }
 }
