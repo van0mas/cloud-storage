@@ -1,7 +1,7 @@
 --liquibase formatted sql
 --changeset gofra:1
 
-CREATE TABLE files (
+CREATE TABLE if NOT EXISTS files (
                        id BIGSERIAL PRIMARY KEY,
                        user_id BIGINT NOT NULL,
                        path TEXT NOT NULL,
@@ -13,4 +13,4 @@ CREATE TABLE files (
                        CONSTRAINT uk_user_path UNIQUE (user_id, path)
 );
 
-CREATE INDEX idx_files_user_id ON files(user_id);
+CREATE INDEX IF NOT EXISTS idx_files_user_id ON files(user_id);
