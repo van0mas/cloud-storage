@@ -3,7 +3,7 @@ package org.example.cloudstorage.it;
 import io.minio.BucketExistsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
-import org.example.cloudstorage.service.storage.MinioObjectStorageAdapter;
+import org.example.cloudstorage.service.storage.port.MinioObjectStorageAdapter;
 import org.example.cloudstorage.exception.storage.StorageNotFoundException;
 import org.example.cloudstorage.model.StorageResource;
 import org.junit.jupiter.api.BeforeEach;

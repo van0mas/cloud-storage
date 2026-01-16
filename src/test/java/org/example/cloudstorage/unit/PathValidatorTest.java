@@ -1,8 +1,9 @@
 package org.example.cloudstorage.unit;
 
+import org.example.cloudstorage.exception.BadRequestException;
 import org.example.cloudstorage.exception.storage.StorageConflictException;
-import org.example.cloudstorage.service.storage.ObjectStoragePort;
-import org.example.cloudstorage.service.storage.PathValidator;
+import org.example.cloudstorage.service.storage.port.ObjectStoragePort;
+import org.example.cloudstorage.service.storage.validation.PathValidator;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -12,7 +13,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -67,10 +67,8 @@ class PathValidatorTest {
         // Затем специфичное (наш 'from' существует)
         when(storagePort.exists(from)).thenReturn(true);
 
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+        BadRequestException ex = assertThrows(BadRequestException.class,
                 () -> pathValidator.validateMove(from, to));
-
-        assertEquals("Нельзя переместить папку в саму себя", ex.getMessage());
     }
 
         @Test
@@ -80,7 +78,7 @@ class PathValidatorTest {
 
             when(storagePort.exists(from)).thenReturn(true);
 
-            assertThrows(IllegalArgumentException.class, () -> pathValidator.validateMove(from, to));
+            assertThrows(BadRequestException.class, () -> pathValidator.validateMove(from, to));
         }
     }
 
