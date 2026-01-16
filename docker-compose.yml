@@ -1,33 +1,62 @@
 services:
+  app:
+    build: .
+    container_name: cloud-storage-app
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=${POSTGRES_DB} # Передаем имя базы из .env
+      - DB_USERNAME=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - REDIS_HOST=redis
+      - MINIO_HOST=minio
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+      - MINIO_BUCKET=${MINIO_BUCKET}
+    depends_on:
+      postgres:
+        condition: service_healthy # Ждем не просто запуска, а успешного healthcheck
+      redis:
+        condition: service_started
+      minio:
+        condition: service_started
+    restart: always
+
   postgres:
     image: postgres:16
-    container_name: postgres_container
+    container_name: postgres_db
     restart: always
-    ports:
-      - "15432:5432"
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      # Проверка: готова ли база принимать подключения
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   redis:
     image: redis:7-alpine
-    ports:
-      - "6379:6379"
+    container_name: redis_cache
+    restart: always
+
   minio:
     image: minio/minio
-    container_name: minio
+    container_name: minio_storage
     restart: always
-    ports:
-      - "9000:9000"
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-      MINIO_BUCKET: ${MINIO_BUCKET}
     volumes:
-      - ./minio-data:/data
-    command: server /data
+      - minio_data:/data
+    command: server /data --console-address ":9001"
 
 volumes:
   postgres_data:
+  minio_data:

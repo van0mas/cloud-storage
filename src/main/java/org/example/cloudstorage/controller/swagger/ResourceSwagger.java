@@ -7,8 +7,12 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.NotBlank;
+import org.example.cloudstorage.annotation.storage.ValidPath;
 import org.example.cloudstorage.dto.storage.ResourceInfoDto;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
@@ -16,33 +20,65 @@ import java.io.IOException;
 import java.util.List;
 
 @Tag(name = "Resource", description = "Действия над файлами и папками")
+@RequestMapping("/api/resource")
 public interface ResourceSwagger {
 
-    @Operation(summary = "Получить информацию об объекте", responses = {
-            @ApiResponse(responseCode = "200", description = "Информация получена"),
-            @ApiResponse(responseCode = "404", description = "Объект по указанному пути не найден")
-    })
-    ResourceInfoDto getResource(Long userId, String path);
+    @Operation(
+            summary = "Получить информацию об объекте",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Информация получена"),
+                    @ApiResponse(responseCode = "404", description = "Объект по указанному пути не найден")
+            }
+    )
+    @GetMapping
+    ResourceInfoDto getResource(
+            Long userId,
 
-    @Operation(summary = "Загрузка файлов", responses = {
-            @ApiResponse(responseCode = "201", description = "Файлы успешно загружены"),
-            @ApiResponse(responseCode = "400", description = "Ошибка валидации пути или пустой файл"),
-            @ApiResponse(responseCode = "409", description = "Файл с таким именем уже существует в данной папке")
-    })
-    List<ResourceInfoDto> upload(Long userId, String path, List<MultipartFile> object) throws IOException;
+            @RequestParam
+            @NotBlank
+            @ValidPath
+            String path
+    );
 
-    @Operation(summary = "Удаление объекта", responses = {
-            @ApiResponse(responseCode = "204", description = "Успешно удалено"),
-            @ApiResponse(responseCode = "404", description = "Файл или папка не найдены")
-    })
-    void deleteResource(Long userId, String path);
+    @Operation(
+            summary = "Загрузка файлов",
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Файлы успешно загружены"),
+                    @ApiResponse(responseCode = "400", description = "Ошибка валидации пути или пустой файл"),
+                    @ApiResponse(responseCode = "409", description = "Файл с таким именем уже существует в данной папке")
+            }
+    )
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    List<ResourceInfoDto> upload(
+            Long userId,
 
-    @Operation(summary = "Перемещение или переименование", responses = {
-            @ApiResponse(responseCode = "200", description = "Объект успешно перемещен"),
-            @ApiResponse(responseCode = "404", description = "Исходный объект не найден"),
-            @ApiResponse(responseCode = "409", description = "В целевой папке уже есть объект с таким именем")
-    })
-    ResourceInfoDto moveResource(Long userId, String from, String to);
+            @RequestParam(required = false)
+            @ValidPath(mustBeDirectory = true)
+            String path,
+
+            @RequestPart("object")
+            List<MultipartFile> object
+    ) throws IOException;
+
+    @Operation(
+            summary = "Удаление объекта",
+            responses = {
+                    @ApiResponse(responseCode = "204", description = "Успешно удалено"),
+                    @ApiResponse(responseCode = "404", description = "Файл или папка не найдены")
+            }
+    )
+    @DeleteMapping
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    void deleteResource(
+            Long userId,
+
+            @RequestParam
+            @NotBlank
+            @ValidPath
+            String path
+    );
+
     @Operation(
             summary = "Скачать файл",
             description = "Возвращает содержимое файла в виде потока данных. Устанавливает правильный Content-Disposition для браузера.",
@@ -55,9 +91,41 @@ public interface ResourceSwagger {
                     @ApiResponse(responseCode = "404", description = "Файл не найден")
             }
     )
+    @GetMapping("/download")
     ResponseEntity<StreamingResponseBody> download(
             Long userId,
-            @Parameter(description = "Путь к файлу для скачивания", example = "docs/contract.pdf") String path
+
+            @RequestParam
+            @NotBlank
+            @ValidPath
+            @Parameter(
+                    description = "Путь к файлу для скачивания",
+                    example = "docs/contract.pdf"
+            )
+            String path
+    );
+
+    @Operation(
+            summary = "Перемещение или переименование",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Объект успешно перемещен"),
+                    @ApiResponse(responseCode = "404", description = "Исходный объект не найден"),
+                    @ApiResponse(responseCode = "409", description = "В целевой папке уже есть объект с таким именем")
+            }
+    )
+    @GetMapping("/move")
+    ResourceInfoDto moveResource(
+            Long userId,
+
+            @RequestParam
+            @NotBlank
+            @ValidPath
+            String from,
+
+            @RequestParam
+            @NotBlank
+            @ValidPath
+            String to
     );
 
     @Operation(
@@ -72,8 +140,16 @@ public interface ResourceSwagger {
                     @ApiResponse(responseCode = "401", description = "Неавторизован")
             }
     )
+    @GetMapping("/search")
     List<ResourceInfoDto> search(
             Long userId,
-            @Parameter(description = "Часть имени файла или папки для поиска", example = "report") String query
+
+            @RequestParam
+            @NotBlank
+            @Parameter(
+                    description = "Часть имени файла или папки для поиска",
+                    example = "report"
+            )
+            String query
     );
 }

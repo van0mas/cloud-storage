@@ -7,8 +7,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.example.cloudstorage.dto.user.AuthResponseDto;
 import org.example.cloudstorage.model.User;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 @Tag(name = "User", description = "Управление данными пользователя и профилем")
+@RequestMapping("/api/user")
 public interface UserSwagger {
 
     @Operation(
@@ -26,5 +29,7 @@ public interface UserSwagger {
                     )
             }
     )
+    @GetMapping("/me")
     AuthResponseDto getCurrentUser(User userDetails);
 }
+
