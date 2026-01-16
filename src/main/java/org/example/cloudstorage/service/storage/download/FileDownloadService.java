@@ -9,6 +9,7 @@ import org.example.cloudstorage.service.storage.base.AbstractStorageService;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.zip.ZipEntry;
@@ -28,39 +29,51 @@ public class FileDownloadService extends AbstractStorageService {
         String fullPath = generateUserPath(userId, path);
 
         if (!path.endsWith("/")) {
-            log.debug("Direct file download: '{}'", fullPath);
-            return outputStream -> {
-                try (InputStream is = storagePort.download(fullPath)) {
-                    is.transferTo(outputStream);
-                }
-            };
+            return downloadSingleFile(fullPath);
         }
+        return downloadFolderAsZip(fullPath, path);
+    }
 
+    private StreamingResponseBody downloadSingleFile(String fullPath) {
+        log.debug("Direct file download: '{}'", fullPath);
+        return outputStream -> {
+            try (InputStream is = storagePort.download(fullPath)) {
+                is.transferTo(outputStream);
+            }
+        };
+    }
+
+    private StreamingResponseBody downloadFolderAsZip(String fullPath, String originalPath) {
         log.debug("Folder download (zip) started: '{}'", fullPath);
+
         List<String> allPaths = storagePort.listAllPathsRecursive(fullPath);
         if (allPaths.isEmpty()) {
             log.warn("Folder is empty or not found for download: '{}'", fullPath);
-            throw new StorageNotFoundException(path);
+            throw new StorageNotFoundException(originalPath);
         }
 
         return outputStream -> {
             try (ZipOutputStream zos = new ZipOutputStream(outputStream)) {
                 for (String objectPath : allPaths) {
-                    String zipEntryName = objectPath.substring(fullPath.length());
-                    if (zipEntryName.isEmpty()) continue;
-
-                    zos.putNextEntry(new ZipEntry(zipEntryName));
-
-                    if (!objectPath.endsWith("/")) {
-                        try (InputStream is = storagePort.download(objectPath)) {
-                            is.transferTo(zos);
-                        }
-                    }
-                    zos.closeEntry();
+                    writeZipEntry(zos, objectPath, fullPath);
                 }
                 zos.finish();
                 zos.flush();
             }
         };
+    }
+
+    private void writeZipEntry(ZipOutputStream zos, String objectPath, String rootPath) throws IOException {
+        String zipEntryName = objectPath.substring(rootPath.length());
+        if (zipEntryName.isEmpty()) return;
+
+        zos.putNextEntry(new ZipEntry(zipEntryName));
+
+        if (!objectPath.endsWith("/")) {
+            try (InputStream is = storagePort.download(objectPath)) {
+                is.transferTo(zos);
+            }
+        }
+        zos.closeEntry();
     }
 }
