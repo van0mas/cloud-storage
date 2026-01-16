@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.example.cloudstorage.annotation.user.CurrentUser;
 import org.example.cloudstorage.annotation.storage.ValidPath;
+import org.example.cloudstorage.controller.swagger.ResourceSwagger;
 import org.example.cloudstorage.dto.storage.ResourceInfoDto;
 import org.example.cloudstorage.service.storage.FileService;
 import org.example.cloudstorage.util.PathUtils;
@@ -23,16 +24,18 @@ import java.util.List;
 @RequestMapping("/api/resource")
 @RequiredArgsConstructor
 @Validated
-public class ResourceController {
+public class ResourceController implements ResourceSwagger {
 
     private final FileService fileService;
 
+    @Override
     @GetMapping
     public ResourceInfoDto getResource(@CurrentUser Long userId,
                                        @RequestParam @ValidPath @NotBlank String path) {
         return fileService.getResource(userId, path);
     }
 
+    @Override
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public List<ResourceInfoDto> upload(@CurrentUser Long userId,
@@ -41,6 +44,7 @@ public class ResourceController {
         return fileService.upload(userId, path, object);
     }
 
+    @Override
     @DeleteMapping
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteResource(@CurrentUser Long userId,
@@ -48,6 +52,7 @@ public class ResourceController {
         fileService.delete(userId, path);
     }
 
+    @Override
     @GetMapping("/download")
     public ResponseEntity<StreamingResponseBody> download(@CurrentUser Long userId,
                                                           @RequestParam @ValidPath @NotBlank String path) {
@@ -62,6 +67,7 @@ public class ResourceController {
                 .body(responseBody);
     }
 
+    @Override
     @GetMapping("/move")
     public ResourceInfoDto moveResource(@CurrentUser Long userId,
                                         @RequestParam @ValidPath @NotBlank String from,
@@ -69,6 +75,7 @@ public class ResourceController {
         return fileService.move(userId, from, to);
     }
 
+    @Override
     @GetMapping("/search")
     public List<ResourceInfoDto> search(@CurrentUser Long userId,
                                         @NotBlank String query) {
