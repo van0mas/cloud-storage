@@ -15,7 +15,7 @@ public final class AppConstants {
                 "^" + USER_ROOT_TEMPLATE.replace("%d", "\\d+") + "(.*)"
         );
 
-        public static final String PATH_REGEXP = "^[a-zA-Zа-яА-ЯёЁ0-9 /_.-]+$";
+        public static final String PATH_REGEXP = "^[a-zA-Zа-яА-ЯёЁ0-9 /_.,!()\\-]+$";
         public static final Pattern PATH_PATTERN = Pattern.compile(PATH_REGEXP);
 
         public static final int MAX_PATH_LENGTH = 1024;
@@ -52,6 +52,10 @@ public final class AppConstants {
         // Дефолт ошибки и валидация
         public static final String INVALID_INPUT = "Переданы некорректные данные";
         public static final String INTERNAL_SERVER_ERROR = "Внутренняя ошибка сервиса";
+
+        // Лимиты
+        public static final String MAX_FILE_COUNT_EXCEEDED = "Превышено максимальное количество файлов";
+        public static final String MAX_STORAGE_SIZE_EXCEEDED = "Превышен максимальный размер хранилища";
 
         // Ошибки хранилища
         public static final String RESOURCE_NOT_FOUND = "Ресурс не найден";

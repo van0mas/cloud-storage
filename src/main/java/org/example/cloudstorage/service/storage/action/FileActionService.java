@@ -1,7 +1,10 @@
 package org.example.cloudstorage.service.storage.action;
 
 import lombok.extern.slf4j.Slf4j;
+import org.example.cloudstorage.config.AppConstants;
+import org.example.cloudstorage.config.MinioProperties;
 import org.example.cloudstorage.dto.ResourceInfoDto;
+import org.example.cloudstorage.exception.Quota.StorageQuotaExceededException;
 import org.example.cloudstorage.mapper.ResourceResponseMapper;
 import org.example.cloudstorage.model.StorageResource;
 import org.example.cloudstorage.service.storage.base.AbstractStorageService;
@@ -18,19 +21,26 @@ import java.util.List;
 @Service
 public class FileActionService extends AbstractStorageService {
 
-    public FileActionService(ObjectStoragePort storagePort, PathValidator pathValidator,
-                             ResourceResponseMapper resourceMapper) {
+    private final MinioProperties properties;
+
+    public FileActionService(ObjectStoragePort storagePort,
+                             PathValidator pathValidator,
+                             ResourceResponseMapper resourceMapper,
+                             MinioProperties properties) {
         super(storagePort, pathValidator, resourceMapper);
+        this.properties = properties;
     }
 
     public List<ResourceInfoDto> upload(long userId, String destinationPath, List<MultipartFile> files) throws IOException {
         log.info("Upload request: userId={}, to='{}', filesCount={}", userId, destinationPath, files.size());
-        List<StorageResource> uploadedResources = new ArrayList<>();
 
+        checkQuota(userId, files);
+
+        List<StorageResource> uploadedResources = new ArrayList<>();
         for (MultipartFile file : files) {
             String originalFilename = file.getOriginalFilename();
-
             pathValidator.validatePath(originalFilename, false);
+
             String relativePath = destinationPath + originalFilename;
             String fullPath = generateUserPath(userId, relativePath);
 
@@ -43,7 +53,6 @@ public class FileActionService extends AbstractStorageService {
                     file.getSize(),
                     file.getContentType()
             );
-
             uploadedResources.add(resource);
         }
 
@@ -104,5 +113,36 @@ public class FileActionService extends AbstractStorageService {
         pathValidator.validateCreateFolder(fullPath, generateUserPrefix(userId));
         StorageResource resource = storagePort.createFolder(fullPath);
         return resourceMapper.toDto(resource);
+    }
+
+    private void checkQuota(long userId, List<MultipartFile> newFiles) {
+        String userPrefix = generateUserPrefix(userId);
+
+        List<StorageResource> currentResources = storagePort.listAllObjectsRecursive(userPrefix);
+
+        int currentFileCount = currentResources.size();
+        long currentTotalSize = currentResources.stream()
+                .mapToLong(StorageResource::size)
+                .sum();
+
+        int incomingCount = newFiles.size();
+        long incomingSize = newFiles.stream()
+                .mapToLong(MultipartFile::getSize)
+                .sum();
+
+        log.debug("Quota check for user {}: currentCount={}, newCount={}, currentSize={}, newSize={}",
+                userId, currentFileCount, incomingCount, currentTotalSize, incomingSize);
+
+        // Проверка по количеству
+        if (currentFileCount + incomingCount > properties.getMaxFilesCount()) {
+            log.warn("Quota exceeded for user {}: too many files", userId);
+            throw new StorageQuotaExceededException(AppConstants.ExceptionMessages.MAX_FILE_COUNT_EXCEEDED);
+        }
+
+        // Проверка по размеру
+        if (currentTotalSize + incomingSize > properties.getMaxStorageSize().toBytes()) {
+            log.warn("Quota exceeded for user {}: storage size limit reached", userId);
+            throw new StorageQuotaExceededException(AppConstants.ExceptionMessages.MAX_STORAGE_SIZE_EXCEEDED);
+        }
     }
 }

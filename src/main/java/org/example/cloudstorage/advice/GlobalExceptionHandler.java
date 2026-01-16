@@ -3,6 +3,7 @@ package org.example.cloudstorage.advice;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.example.cloudstorage.config.AppConstants;
+import org.example.cloudstorage.exception.Quota.StorageQuotaExceededException;
 import org.example.cloudstorage.exception.storage.StorageException;
 import org.example.cloudstorage.exception.user.UnauthorizedException;
 import org.example.cloudstorage.exception.user.UserAlreadyExistsException;
@@ -82,6 +83,14 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleConflict(UserAlreadyExistsException e) {
         log.warn("User conflict: {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse(e.getMessage()));
+    }
+
+    // 413
+    @ExceptionHandler(StorageQuotaExceededException.class)
+    public ResponseEntity<ErrorResponse> handleQuotaExceeded(StorageQuotaExceededException e) {
+        log.warn("Storage quota exceeded: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
                 .body(new ErrorResponse(e.getMessage()));
     }
 
