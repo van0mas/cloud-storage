@@ -1,9 +1,9 @@
-package org.example.cloudstorage.controller.auth;
+package org.example.cloudstorage.controller.user;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.example.cloudstorage.dto.AuthRequestDto;
-import org.example.cloudstorage.dto.AuthResponseDto;
+import org.example.cloudstorage.dto.user.AuthRequestDto;
+import org.example.cloudstorage.dto.user.AuthResponseDto;
 import org.example.cloudstorage.service.auth.AuthService;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;

@@ -2,9 +2,9 @@ package org.example.cloudstorage.controller.storage;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
-import org.example.cloudstorage.annotation.CurrentUser;
-import org.example.cloudstorage.annotation.ValidPath;
-import org.example.cloudstorage.dto.ResourceInfoDto;
+import org.example.cloudstorage.annotation.user.CurrentUser;
+import org.example.cloudstorage.annotation.storage.ValidPath;
+import org.example.cloudstorage.dto.storage.ResourceInfoDto;
 import org.example.cloudstorage.service.storage.FileService;
 import org.example.cloudstorage.util.PathUtils;
 import org.springframework.http.HttpHeaders;

@@ -1,7 +1,7 @@
 package org.example.cloudstorage.service.storage.query;
 
 import lombok.extern.slf4j.Slf4j;
-import org.example.cloudstorage.dto.ResourceInfoDto;
+import org.example.cloudstorage.dto.storage.ResourceInfoDto;
 import org.example.cloudstorage.mapper.ResourceResponseMapper;
 import org.example.cloudstorage.service.storage.validation.PathValidator;
 import org.example.cloudstorage.service.storage.base.AbstractStorageService;

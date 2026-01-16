@@ -1,7 +1,7 @@
 package org.example.cloudstorage.service.auth;
 
-import org.example.cloudstorage.dto.AuthRequestDto;
-import org.example.cloudstorage.dto.AuthResponseDto;
+import org.example.cloudstorage.dto.user.AuthRequestDto;
+import org.example.cloudstorage.dto.user.AuthResponseDto;
 
 public interface AuthService {
 

@@ -4,7 +4,7 @@ import io.minio.BucketExistsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import org.assertj.core.api.Assertions;
-import org.example.cloudstorage.dto.ResourceInfoDto;
+import org.example.cloudstorage.dto.storage.ResourceInfoDto;
 import org.example.cloudstorage.exception.BadRequestException;
 import org.example.cloudstorage.exception.storage.StorageConflictException;
 import org.example.cloudstorage.exception.storage.StorageNotFoundException;

@@ -3,7 +3,7 @@ package org.example.cloudstorage.advice;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.example.cloudstorage.config.AppConstants;
-import org.example.cloudstorage.exception.Quota.StorageQuotaExceededException;
+import org.example.cloudstorage.exception.storage.Quota.StorageQuotaExceededException;
 import org.example.cloudstorage.exception.storage.StorageException;
 import org.example.cloudstorage.exception.user.UnauthorizedException;
 import org.example.cloudstorage.exception.user.UserAlreadyExistsException;

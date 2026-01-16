@@ -2,7 +2,7 @@ package org.example.cloudstorage.service.storage;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.cloudstorage.dto.ResourceInfoDto;
+import org.example.cloudstorage.dto.storage.ResourceInfoDto;
 import org.example.cloudstorage.service.storage.action.FileActionService;
 import org.example.cloudstorage.service.storage.download.FileDownloadService;
 import org.example.cloudstorage.service.storage.query.FileQueryService;

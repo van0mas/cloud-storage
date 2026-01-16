@@ -1,7 +1,7 @@
 package org.example.cloudstorage.mapper;
 
 import org.example.cloudstorage.config.AppConstants;
-import org.example.cloudstorage.dto.ResourceInfoDto;
+import org.example.cloudstorage.dto.storage.ResourceInfoDto;
 import org.example.cloudstorage.model.StorageResource;
 import org.example.cloudstorage.util.PathUtils;
 import org.springframework.stereotype.Component;

@@ -1,4 +1,4 @@
-package org.example.cloudstorage.annotation;
+package org.example.cloudstorage.annotation.user;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

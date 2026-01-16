@@ -1,6 +1,6 @@
 package org.example.cloudstorage.resolver;
 
-import org.example.cloudstorage.annotation.CurrentUser;
+import org.example.cloudstorage.annotation.user.CurrentUser;
 import org.example.cloudstorage.model.User;
 import org.example.cloudstorage.security.UserDetailsImpl;
 import org.springframework.core.MethodParameter;

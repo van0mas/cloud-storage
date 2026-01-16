@@ -1,4 +1,4 @@
-package org.example.cloudstorage.annotation;
+package org.example.cloudstorage.annotation.storage;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
